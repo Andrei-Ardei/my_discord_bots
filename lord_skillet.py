@@ -19,12 +19,7 @@ else:
 intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-bot_locations = [
-    "in rain ¬ >help",
-    "with dead people",
-    "with Yog-Sothoth",
-    "in the Arkham Asylum",
-]
+bot_locations = [" and quietly listening to everything you say"]
 
 
 @bot.event  # print that the bot is ready to make sure that it actually logged on
@@ -73,6 +68,7 @@ async def on_message(message):
             await message.channel.send("Yum yum, delicious.")
 
 
+# set folder path for key based on the environment
 if os.name == "nt":
     path = os.sep.join(["C:", "users", "Andrei", "vault.json"])
 elif os.name == "posix":
