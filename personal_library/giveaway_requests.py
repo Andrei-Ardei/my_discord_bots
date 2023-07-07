@@ -8,20 +8,23 @@ def get_giveaways():
     
     if response.status_code == 200:
         data = response.json()
-        published_date_str = data[0]['published_date']  # Get the published date from the response
-    
-        published_date = datetime.strptime(published_date_str, '%Y-%m-%d %H:%M:%S').date()
-        today = date.today()
-
-        previous_day = today - timedelta(days=1)    
+        filtered_giveaways = []
+        for giveaway in data:
+            published_date_str = giveaway['published_date']  # Get the published date from the response
         
-        if published_date == previous_day:
-            print("Today's date matches the published date!")
-            return data[0]
-        else:
-            print("Today's date does not match the published date.")
+            published_date = datetime.strptime(published_date_str, '%Y-%m-%d %H:%M:%S').date()
+            today = date.today()
+
+            #this is used for troubleshooting - uncomment and alter the days to look into a different day, then change the today from the if condition below to the previous_day
+            #previous_day = today - timedelta(days=8)   
+
+            if published_date == today:
+                #print("Today's date matches the published date!")
+                filtered_giveaways.append(giveaway)
+            else:
+                #print("Today's date does not match the published date.")
+                pass
+        return filtered_giveaways
     else:
         print('Error occurred. Status code:', response.status_code)
-
-giveaways_data = get_giveaways()
-print(giveaways_data)
+    return []

@@ -8,8 +8,8 @@ import json
 import os
 import csv
 from personal_library import giveaway_requests
-from datetime import datetime, date,timedelta
-
+from datetime import datetime, date, timedelta, time
+import pytz
 
 intents = discord.Intents.default()
 
@@ -38,7 +38,7 @@ def append_data_to_csv(filename, date,game_title):
             writer.writerow([date, game_title])  # Write data
 
 def check_game_title(filename, game_title):
-    today = datetime.now().date()
+    today = date.today()
     thirty_days_ago = today - timedelta(days=30)
     
     with open(filename, 'r') as file:
@@ -97,44 +97,51 @@ async def on_message(message):
 
 
 # loop task every day
-
-
-@tasks.loop(seconds=5, count=3)  # repeat after every 5 seconds
+utc = pytz.UTC
+times = [
+    time(hour=8, tzinfo=utc),
+    time(hour=12, minute=30, tzinfo=utc),
+    time(hour=16, minute=40, second=30, tzinfo=utc),
+    time(hour=18, minute=59, tzinfo=utc)
+]
+@tasks.loop(time=times)  # use - seconds=5, count=1 - for testing, time=times for live
 async def myLoop():
     data = giveaway_requests.get_giveaways()
 
 #check if we have already sent this today
     filename = os.sep.join(["personal_library","game_history.csv"])
-    did_we_send_this_today = check_game_title(filename=filename,game_title=data['title'])
-    print(f"Did we really already send this game?: {did_we_send_this_today}")
-    if did_we_send_this_today:
-        print("do not post the results")
-    else:
-        def get_final_url(url):
-            response = requests.get(url, allow_redirects=True)
-            return response.url
+    #Loop through all potential giveaways in a day
+    for giveaway in data:
+        did_we_send_this_today = check_game_title(filename=filename,game_title=giveaway['title'])
+        print(f"Did we really already send this game?: {did_we_send_this_today}")
+        if did_we_send_this_today:
+            print("do not post the results")
+        else:
+            def get_final_url(url):
+                response = requests.get(url, allow_redirects=True)
+                return response.url
 
-        final_url = get_final_url(data['open_giveaway_url'])
+            final_url = get_final_url(giveaway['open_giveaway_url'])
 
-        embed = discord.Embed(
-        title=data['title'],
-        description=data['description'],
-        color=discord.Color.green(),
-        url=final_url
-        )
-        embed.set_thumbnail(url=data['thumbnail'])
-        embed.set_image(url=data['image'])
-        embed.add_field(name='Worth', value=data['worth'])
-        embed.add_field(name='Instructions', value=data['instructions'], inline=False)
-        embed.add_field(name='Platforms', value=data['platforms'])
-        embed.add_field(name='End Date', value=data['end_date'])
-        embed.set_footer(text='Published on: ' + data['published_date'])
+            embed = discord.Embed(
+            title=giveaway['title'],
+            description=giveaway['description'],
+            color=discord.Color.green(),
+            url=final_url
+            )
+            embed.set_thumbnail(url=giveaway['thumbnail'])
+            embed.set_image(url=giveaway['image'])
+            embed.add_field(name='Worth', value=giveaway['worth'])
+            embed.add_field(name='Instructions', value=giveaway['instructions'], inline=False)
+            embed.add_field(name='Platforms', value=giveaway['platforms'])
+            embed.add_field(name='End Date', value=giveaway['end_date'])
+            embed.set_footer(text='Published on: ' + giveaway['published_date'])
 
-        #channel send message
-        channel_id=1049021869648523335
-        channel = bot.get_channel(channel_id)
-        await channel.send(embed=embed)
-        append_data_to_csv(filename=filename,date=data['published_date'],game_title=data['title'])
+            #channel send message
+            channel_id=1049021869648523335
+            channel = bot.get_channel(channel_id)
+            await channel.send(embed=embed)
+            append_data_to_csv(filename=filename,date=giveaway['published_date'],game_title=giveaway['title'])
 
 #####LOGIN
 # set folder path for key based on the environment
