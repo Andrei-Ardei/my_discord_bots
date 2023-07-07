@@ -57,15 +57,15 @@ async def on_message(message):
             writer.writerow([message.author, message.content])  # Write data
 
     ####################################################### stop record messages
-    match message.content:
-        case "$hello":
-            await message.channel.send("Hello!")
+    # match message.content:
+    #     case "$hello":
+    #         await message.channel.send("Hello!")
 
-        case "$mananci cariciu":
-            await message.channel.send("ba tu pe-al meu")
+    #     case "$mananci cariciu":
+    #         await message.channel.send("ba tu pe-al meu")
 
-        case "purple ketchup":
-            await message.channel.send("Yum yum, delicious.")
+    #     case "purple ketchup":
+    #         await message.channel.send("Yum yum, delicious.")
 
 
 # set folder path for key based on the environment
