@@ -78,7 +78,11 @@ async def on_message(message):
     print(message.author)
     print(message.content)
     ######################################################## record messages
-    filename = "skillet_data.csv"
+    if os.name == "nt":
+        filename = os.sep.join(["skillet_data.csv"])
+    elif os.name == "posix":
+        filename = os.sep.join(["/", "home", "pi", "git_projects", "my_discord_bots","skillet_data.csv"])
+    #filename = "skillet_data.csv"
 
     if not os.path.isfile(filename):
         # File does not exist, create a new one and write headers
@@ -109,7 +113,13 @@ async def myLoop():
     data = giveaway_requests.get_giveaways()
 
 #check if we have already sent this today
-    filename = os.sep.join(["personal_library","game_history.csv"])
+    
+    if os.name == "nt":
+        filename = os.sep.join(["personal_library","game_history.csv"])
+    elif os.name == "posix":
+        filename = os.sep.join(["/", "home", "pi", "git_projects", "my_discord_bots","personal_library","game_history.csv"])
+
+    #filename = os.sep.join(["personal_library","game_history.csv"])
     #Loop through all potential giveaways in a day
     for giveaway in data:
         did_we_send_this_today = check_game_title(filename=filename,game_title=giveaway['title'])
