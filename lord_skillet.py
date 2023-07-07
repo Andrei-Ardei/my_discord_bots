@@ -1,12 +1,14 @@
 import discord
 from discord import Game
-from discord.ext import commands
+from discord.ext import commands, tasks
 import random
 from random import choice
 import requests
 import json
 import os
 import csv
+from personal_library import giveaway_requests
+from datetime import datetime, date,timedelta
 
 
 intents = discord.Intents.default()
@@ -19,14 +21,48 @@ else:
 intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-bot_locations = [" and quietly listening to everything you say"]
+bot_locations = [" and quietly listening"]
+################### FUNCTIONS BELOW ##############
 
+def append_data_to_csv(filename, date,game_title):
+    if not os.path.isfile(filename):
+        # File does not exist, create a new one and write headers
+        with open(filename, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["date", "game_title"])  # Write headers
+            writer.writerow([date, game_title])  # Write data
+    else:
+        # File exists, append data
+        with open(filename, "a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow([date, game_title])  # Write data
+
+def check_game_title(filename, game_title):
+    today = datetime.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+    
+    with open(filename, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip the header row
+        
+        for row in reader:
+            date_str = row[0]  # Assuming the date is in the first column
+            game_date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S').date()
+            
+            if game_date >= thirty_days_ago and game_date <= today and row[1] == game_title:
+                return True  # Game title found within the past 30 days
+
+    return False  # Game title not found within the past 30 days
+
+
+###END FUNCTIONS
 
 @bot.event  # print that the bot is ready to make sure that it actually logged on
 async def on_ready():
     print("Logged in as:")
     print(bot.user.name)
     await bot.change_presence(activity=Game(name=f"{choice(bot_locations)}"))
+    myLoop.start()
 
 
 @bot.command(pass_context=True)  # define the first command and set prefix to '!'
@@ -57,22 +93,55 @@ async def on_message(message):
             writer.writerow([message.author, message.content])  # Write data
 
     ####################################################### stop record messages
-    # match message.content:
-    #     case "$hello":
-    #         await message.channel.send("Hello!")
-
-    #     case "$mananci cariciu":
-    #         await message.channel.send("ba tu pe-al meu")
-
-    #     case "purple ketchup":
-    #         await message.channel.send("Yum yum, delicious.")
 
 
+
+# loop task every day
+
+
+@tasks.loop(seconds=5, count=3)  # repeat after every 5 seconds
+async def myLoop():
+    data = giveaway_requests.get_giveaways()
+
+#check if we have already sent this today
+    filename = os.sep.join(["personal_library","game_history.csv"])
+    did_we_send_this_today = check_game_title(filename=filename,game_title=data['title'])
+    print(f"Did we really already send this game?: {did_we_send_this_today}")
+    if did_we_send_this_today:
+        print("do not post the results")
+    else:
+        def get_final_url(url):
+            response = requests.get(url, allow_redirects=True)
+            return response.url
+
+        final_url = get_final_url(data['open_giveaway_url'])
+
+        embed = discord.Embed(
+        title=data['title'],
+        description=data['description'],
+        color=discord.Color.green(),
+        url=final_url
+        )
+        embed.set_thumbnail(url=data['thumbnail'])
+        embed.set_image(url=data['image'])
+        embed.add_field(name='Worth', value=data['worth'])
+        embed.add_field(name='Instructions', value=data['instructions'], inline=False)
+        embed.add_field(name='Platforms', value=data['platforms'])
+        embed.add_field(name='End Date', value=data['end_date'])
+        embed.set_footer(text='Published on: ' + data['published_date'])
+
+        #channel send message
+        channel_id=1049021869648523335
+        channel = bot.get_channel(channel_id)
+        await channel.send(embed=embed)
+        append_data_to_csv(filename=filename,date=data['published_date'],game_title=data['title'])
+
+#####LOGIN
 # set folder path for key based on the environment
 if os.name == "nt":
     path = os.sep.join(["C:", "users", "Andrei", "vault.json"])
 elif os.name == "posix":
-    path = os.sep.join(["home", "pi", "key", "vault.json"])
+    path = os.sep.join(["/", "home", "pi", "key", "vault.json"])
 
 
 # open file
@@ -82,3 +151,5 @@ j = json.load(f)
 # store the key value
 
 bot.run(str(j["lord_skillet"]["key"]))
+#END LOGIN
+
