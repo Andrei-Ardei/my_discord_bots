@@ -104,7 +104,7 @@ times = [
     time(hour=16, minute=40, second=30, tzinfo=utc),
     time(hour=18, minute=59, tzinfo=utc)
 ]
-@tasks.loop(time=times)  # use - seconds=5, count=1 - for testing, time=times for live
+@tasks.loop(hours=4)  # use - seconds=5, count=1 - for testing, time=times for live
 async def myLoop():
     data = giveaway_requests.get_giveaways()
 
