@@ -108,7 +108,7 @@ times = [
     time(hour=16, minute=40, second=30, tzinfo=utc),
     time(hour=18, minute=59, tzinfo=utc)
 ]
-@tasks.loop(hours=4)  # use - seconds=5, count=1 - for testing, time=times for live
+@tasks.loop(minutes=30)  # use - seconds=5, count=1 - for testing, time=times for live
 async def myLoop():
     data = giveaway_requests.get_giveaways()
 
@@ -148,7 +148,7 @@ async def myLoop():
             embed.set_footer(text='Published on: ' + giveaway['published_date'])
 
             #channel send message
-            channel_id=1049021869648523335
+            channel_id=925636804823121951
             channel = bot.get_channel(channel_id)
             await channel.send(embed=embed)
             append_data_to_csv(filename=filename,date=giveaway['published_date'],game_title=giveaway['title'])
