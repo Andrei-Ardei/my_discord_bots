@@ -7,7 +7,7 @@ import requests
 import json
 import os
 import csv
-from personal_library import giveaway_requests
+from personal_library import giveaway_requests, API_dictionary_request
 from datetime import datetime, date, timedelta, time
 import pytz
 
@@ -19,12 +19,14 @@ else:
     intents.messages = True
 
 intents.members = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="$", intents=intents)
 
 bot_locations = [" and quietly listening"]
-################### FUNCTIONS BELOW ##############
 
-def append_data_to_csv(filename, date,game_title):
+
+# FUNCTIONS BELOW
+
+def append_data_to_csv(filename, date, game_title):
     if not os.path.isfile(filename):
         # File does not exist, create a new one and write headers
         with open(filename, "w", newline="") as file:
@@ -37,25 +39,26 @@ def append_data_to_csv(filename, date,game_title):
             writer = csv.writer(file)
             writer.writerow([date, game_title])  # Write data
 
+
 def check_game_title(filename, game_title):
     today = date.today()
     thirty_days_ago = today - timedelta(days=30)
-    
+
     with open(filename, 'r') as file:
         reader = csv.reader(file)
         next(reader)  # Skip the header row
-        
+
         for row in reader:
             date_str = row[0]  # Assuming the date is in the first column
             game_date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S').date()
-            
+
             if game_date >= thirty_days_ago and game_date <= today and row[1] == game_title:
                 return True  # Game title found within the past 30 days
 
     return False  # Game title not found within the past 30 days
 
 
-###END FUNCTIONS
+# END FUNCTIONS
 
 @bot.event  # print that the bot is ready to make sure that it actually logged on
 async def on_ready():
@@ -70,6 +73,58 @@ async def hello(ctx):
     await ctx.send("Hello!!")
 
 
+@bot.command(pass_context=True)  # define the first command and set prefix to '!'
+async def word(ctx, *, arg):
+    '''Returns the word definition eg.,> $word horse <'''
+    word_definition_list = API_dictionary_request.query_dictionary(arg)
+    if not 'title' in word_definition_list and len(word_definition_list) > 0 : 
+
+        word_descriptions = ''
+        list_of_word_descriptions = []
+        current_number = 1
+
+        for definition in word_definition_list:
+            if 'phonetic' in definition:
+                list_of_word_descriptions.append('\r\n## ' + definition['word'] +' '+definition['phonetic'] + '\r\n')
+            else:
+                list_of_word_descriptions.append('\r\n## ' + definition['word'] +'\r\n')
+            for meaning in definition['meanings']:
+                list_of_word_descriptions.append('### ' + meaning['partOfSpeech'])
+                for definitions in meaning['definitions']:
+
+                    if not 'example' in definitions:
+                        list_of_word_descriptions.append(str(current_number) + '. ' + definitions['definition'].capitalize())
+
+                    else:
+                        list_of_word_descriptions.append(str(current_number) + '. ' + definitions['definition'].capitalize() + '\r\n' + '\"_' + definitions['example'] + '_\"')
+
+                    current_number += 1
+
+        word_descriptions = '\r\n\r\n'.join(list_of_word_descriptions)
+        embed = discord.Embed(
+            #title=f'**{arg.lower()}**',
+            description=word_descriptions,
+            color=discord.Color.from_rgb(5, 243, 255),
+            # url=final_url
+        )
+        embed.set_thumbnail(url='https://freesvg.org/img/Cat-in-a-pan.png')
+
+        #embed.add_field(name='Instructions', value='test', inline=False)
+        #embed.set_footer(text='Published on: ')
+
+        await ctx.send(embed=embed)
+    elif 'title' in word_definition_list:
+        embed2 = discord.Embed(
+            title = f'{word_definition_list["title"]}',
+            description = f'{word_definition_list["message"]}\r\n{word_definition_list["resolution"]}',
+            color = discord.Color.from_rgb(237, 67, 55),
+            # url=final_url
+        )
+        await ctx.send(embed=embed2)
+    else:
+        await ctx.send('There is some error with the dictionary, please investigate.')
+
+
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
@@ -77,12 +132,12 @@ async def on_message(message):
         return
     print(message.author)
     print(message.content)
-    ######################################################## record messages
+    # record messages
     if os.name == "nt":
         filename = os.sep.join(["skillet_data.csv"])
     elif os.name == "posix":
-        filename = os.sep.join(["/", "home", "pi", "git_projects", "my_discord_bots","skillet_data.csv"])
-    #filename = "skillet_data.csv"
+        filename = os.sep.join(["/", "home", "pi", "git_projects", "my_discord_bots", "skillet_data.csv"])
+    # filename = "skillet_data.csv"
 
     if not os.path.isfile(filename):
         # File does not exist, create a new one and write headers
@@ -96,8 +151,7 @@ async def on_message(message):
             writer = csv.writer(file)
             writer.writerow([message.author, message.content])  # Write data
 
-    ####################################################### stop record messages
-
+    # stop record messages
 
 
 # loop task every day
@@ -108,21 +162,24 @@ times = [
     time(hour=16, minute=40, second=30, tzinfo=utc),
     time(hour=18, minute=59, tzinfo=utc)
 ]
+
+
 @tasks.loop(minutes=30)  # use - seconds=5, count=1 - for testing, time=times for live
 async def myLoop():
     data = giveaway_requests.get_giveaways()
 
-#check if we have already sent this today
-    
-    if os.name == "nt":
-        filename = os.sep.join(["personal_library","game_history.csv"])
-    elif os.name == "posix":
-        filename = os.sep.join(["/", "home", "pi", "git_projects", "my_discord_bots","personal_library","game_history.csv"])
+    # check if we have already sent this today
 
-    #filename = os.sep.join(["personal_library","game_history.csv"])
-    #Loop through all potential giveaways in a day
+    if os.name == "nt":
+        filename = os.sep.join(["personal_library", "game_history.csv"])
+    elif os.name == "posix":
+        filename = os.sep.join(
+            ["/", "home", "pi", "git_projects", "my_discord_bots", "personal_library", "game_history.csv"])
+
+    # filename = os.sep.join(["personal_library","game_history.csv"])
+    # Loop through all potential giveaways in a day
     for giveaway in data:
-        did_we_send_this_today = check_game_title(filename=filename,game_title=giveaway['title'])
+        did_we_send_this_today = check_game_title(filename=filename, game_title=giveaway['title'])
         print(f"Did we really already send this game?: {did_we_send_this_today}")
         if did_we_send_this_today:
             print("do not post the results")
@@ -134,10 +191,10 @@ async def myLoop():
             final_url = get_final_url(giveaway['open_giveaway_url'])
 
             embed = discord.Embed(
-            title=giveaway['title'],
-            description=giveaway['description'],
-            color=discord.Color.green(),
-            url=final_url
+                title=giveaway['title'],
+                description=giveaway['description'],
+                color=discord.Color.green(),
+                url=final_url
             )
             embed.set_thumbnail(url=giveaway['thumbnail'])
             embed.set_image(url=giveaway['image'])
@@ -147,19 +204,19 @@ async def myLoop():
             embed.add_field(name='End Date', value=giveaway['end_date'])
             embed.set_footer(text='Published on: ' + giveaway['published_date'])
 
-            #channel send message
-            channel_id=925636804823121951
+            # channel send message
+            channel_id = 925636804823121951
             channel = bot.get_channel(channel_id)
             await channel.send(embed=embed)
-            append_data_to_csv(filename=filename,date=giveaway['published_date'],game_title=giveaway['title'])
+            append_data_to_csv(filename=filename, date=giveaway['published_date'], game_title=giveaway['title'])
 
-#####LOGIN
+
+# LOGIN
 # set folder path for key based on the environment
 if os.name == "nt":
     path = os.sep.join(["C:", "users", "Andrei", "vault.json"])
 elif os.name == "posix":
     path = os.sep.join(["/", "home", "pi", "key", "vault.json"])
-
 
 # open file
 f = open(path)
@@ -168,5 +225,4 @@ j = json.load(f)
 # store the key value
 
 bot.run(str(j["lord_skillet"]["key"]))
-#END LOGIN
-
+# END LOGIN
