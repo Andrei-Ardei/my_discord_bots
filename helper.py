@@ -3,7 +3,7 @@ import csv
 import os
 
 
-def parse_online_dictionary_results(word_definition_list) -> list[str]:
+def parse_online_dictionary_results(word_definition_list):
     list_of_word_descriptions = []
     current_number = 1
 
