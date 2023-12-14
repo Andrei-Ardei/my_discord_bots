@@ -1,0 +1,37 @@
+[
+  {
+    "app_name": "Call to Arms - Gates of Hell: Ostfront",
+    "app_id": 400750,
+    "author_id": 243365137795383297,
+    "id": 1,
+    "pref_cur": "ie"
+  },
+  {
+    "app_name": "Company of Heroes 3",
+    "app_id": 1677280,
+    "author_id": 243365137795383297,
+    "id": 2,
+    "pref_cur": "ie"
+  },
+  {
+    "app_name": "MELTY BLOOD: TYPE LUMINA - Aoko Aozaki Round Announcements",
+    "app_id": 1810562,
+    "author_id": 243365137795383297,
+    "id": 3,
+    "pref_cur": "ie"
+  },
+  {
+    "app_name": "Grounded",
+    "app_id": 962130,
+    "author_id": 164860331741544448,
+    "id": 4,
+    "pref_cur": "gb"
+  },
+  {
+    "app_name": "Company of Heroes 3",
+    "app_id": 1677280,
+    "author_id": 164860331741544448,
+    "id": 6,
+    "pref_cur": "gb"
+  }
+]

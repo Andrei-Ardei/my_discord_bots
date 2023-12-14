@@ -1,12 +1,11 @@
 import discord
-from discord import Game
 from discord.ext import commands, tasks
 from random import choice
 import requests
 import os
 import csv
-from personal_library import giveaway_requests, API_dictionary_request
-from datetime import datetime, date, timedelta, time
+from personal_library import giveaway_requests, API_dictionary_request, steam_games_sale_tracker
+from datetime import time
 import pytz
 import auth
 import helper
@@ -29,32 +28,11 @@ else:
 intents.members = True
 bot = commands.Bot(command_prefix="$", intents=intents)
 
-bot_locations = [" and quietly listening"]
-
-
-# FUNCTIONS BELOW
-
-def append_data_to_csv(filename, date, game_title):
-    if not os.path.isfile(filename):
-        # File does not exist, create a new one and write headers
-        with open(filename, "w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["date", "game_title"])  # Write headers
-            writer.writerow([date, game_title])  # Write data
-    else:
-        # File exists, append data
-        with open(filename, "a", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow([date, game_title])  # Write data
-
-# END FUNCTIONS
-
 
 @bot.event  # print that the bot is ready to make sure that it actually logged on
 async def on_ready():
     print("Logged in as:")
     print(bot.user.name)
-    await bot.change_presence(activity=Game(name=f"{choice(bot_locations)}"))
     myLoop.start()
 
 
@@ -97,6 +75,67 @@ async def word(ctx, *, arg):
         await ctx.send('There is some error with the dictionary, please investigate.')
 
 
+@bot.command(pass_context=True)
+async def track(ctx, *, arg=None):
+    """Track your favourite game on steam for a discount."""
+
+    if arg == "gbp":
+        cc_param = "gb"
+    elif arg == "eur":
+        cc_param = "ie"
+    else:
+        cc_param = "us"
+
+    await ctx.message.author.send(f"Hey {ctx.message.author.mention}, which game would you like me to track for you? ")
+
+    def check(message):
+        return message.author == ctx.message.author and message.channel == ctx.message.channel
+
+    reply_message = await bot.wait_for('message', check=check, timeout=60.0)
+
+    if reply_message.content.lower().strip() == 'no':
+        await ctx.message.author.send(f"Okay, I am going back to sleep.")
+    else:
+        games_list = steam_games_sale_tracker.fetch_list_of_games_by_name(
+            reply_message.content.lower().strip())
+        counter = 1
+        bot_message = ''
+        if len(games_list) == 1:
+            # Process list of game as single
+            my_dict = {
+                "app_name": games_list[0]['name'],
+                "app_id": games_list[0]['appid'],
+                "author_id": ctx.message.author.id,
+                "pref_cur": cc_param
+            }
+            helper.dump_dict_to_json(my_dict, 'notifications.json')
+            await ctx.message.author.send(f"Ok, I will track {games_list[0]['name']} for you.")
+        elif len(games_list) > 2 and len(games_list) < 20:
+            # Process more results
+            for game in games_list:
+                bot_message += str(counter)+'. '+game['name']+'\r\n'
+                counter += 1
+            await ctx.message.author.send(f"{bot_message}\r\nPlease select your choice by replying with a number from 1 to {counter-1}")
+            reply_choice = await bot.wait_for('message', check=check, timeout=60.0)
+            choice = int(reply_choice.content)
+
+            my_dict = {
+                "app_name": games_list[choice-1]['name'],
+                "app_id": games_list[choice-1]['appid'],
+                "author_id": ctx.message.author.id,
+                "pref_cur": cc_param
+            }
+
+            helper.dump_dict_to_json(my_dict, 'notifications.json')
+            await ctx.message.author.send(f"Ok, I will track {games_list[choice-1]['name']} for you.")
+
+        elif len(games_list) > 20:
+            await ctx.message.author.send(f"Found {len(games_list)} games. This is a bit too much to send in the chat. Can you try to narrow it down by being more specific?")
+        else:
+            # No results
+            await ctx.message.author.send("Couldn't find any games like that.")
+
+
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
@@ -107,7 +146,8 @@ async def on_message(message):
     # record messages
     helper.record_messages(message)
 
-# use - seconds=5, count=1 - for testing, time=times for live
+# use - seconds=5, count=1 - for testing
+# use minutes=30 for live
 
 
 @tasks.loop(minutes=30)
@@ -161,6 +201,18 @@ async def myLoop():
             helper.append_data_to_csv(
                 filename=filename, date=giveaway['published_date'], game_title=giveaway['title'])
 
+    discord_users = helper.get_unique_author_ids()
+    for user in discord_users:
+        list_of_games = helper.get_elements_by_author_id(
+            'notifications.json', user)
+
+        list_of_discounts = helper.verify_games(list_of_games)
+        if list_of_discounts:
+            recipient = await bot.fetch_user(user)
+
+            combined_message = '\n'.join(list_of_discounts)
+
+            await recipient.send(combined_message)
 
 # LOGIN
 bot.run(auth.KEY_BOT)
