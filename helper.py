@@ -3,6 +3,13 @@ import csv
 import os
 import json
 from personal_library import steam_games_sale_tracker as sgst
+import os
+
+if os.name == "nt":
+    notifications_json_file = os.sep.join(["notifications.json"])
+elif os.name == "posix":
+    notifications_json_file = os.sep.join(
+        ["/", "home", "menajerulrobotilor", "git_projects", "my_discord_bots", "notifications.json"])
 
 
 def parse_online_dictionary_results(word_definition_list):
@@ -70,7 +77,7 @@ def record_messages(message):
         filename = os.sep.join(["skillet_data.csv"])
     elif os.name == "posix":
         filename = os.sep.join(
-            ["/", "home", "pi", "git_projects", "my_discord_bots", "skillet_data.csv"])
+            ["/", "home", "menajerulrobotilor", "git_projects", "my_discord_bots", "skillet_data.csv"])
     # filename = "skillet_data.csv"
 
     if not os.path.isfile(filename):
@@ -139,7 +146,7 @@ def get_elements_by_author_id(filename, target_author_id):
     return matching_elements
 
 
-def get_unique_author_ids(filename='notifications.json'):
+def get_unique_author_ids(filename=notifications_json_file):
     try:
         with open(filename, 'r') as file:
             data = json.load(file)
@@ -157,7 +164,7 @@ def get_unique_author_ids(filename='notifications.json'):
 
 
 def pop_the_current_subscription_if_a_discount_is_found(sub_id):
-    file_path = 'notifications.json'
+    file_path = notifications_json_file
     with open(file_path, 'r') as file:
         game_list = json.load(file)
 
@@ -172,5 +179,6 @@ def pop_the_current_subscription_if_a_discount_is_found(sub_id):
 if __name__ == "__main__":
     discord_users = get_unique_author_ids()
     for user in discord_users:
-        list_of_games = get_elements_by_author_id('notifications.json', user)
+        list_of_games = get_elements_by_author_id(
+            notifications_json_file, user)
         list_of_discounts = verify_games(list_of_games)

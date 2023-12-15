@@ -108,7 +108,7 @@ async def track(ctx, *, arg=None):
                 "author_id": ctx.message.author.id,
                 "pref_cur": cc_param
             }
-            helper.dump_dict_to_json(my_dict, 'notifications.json')
+            helper.dump_dict_to_json(my_dict, helper.notifications_json_file)
             await ctx.message.author.send(f"Ok, I will track {games_list[0]['name']} for you.")
         elif len(games_list) > 2 and len(games_list) < 20:
             # Process more results
@@ -126,7 +126,7 @@ async def track(ctx, *, arg=None):
                 "pref_cur": cc_param
             }
 
-            helper.dump_dict_to_json(my_dict, 'notifications.json')
+            helper.dump_dict_to_json(my_dict, helper.notifications_json_file)
             await ctx.message.author.send(f"Ok, I will track {games_list[choice-1]['name']} for you.")
 
         elif len(games_list) > 20:
@@ -204,7 +204,7 @@ async def myLoop():
     discord_users = helper.get_unique_author_ids()
     for user in discord_users:
         list_of_games = helper.get_elements_by_author_id(
-            'notifications.json', user)
+            helper.notifications_json_file, user)
 
         list_of_discounts = helper.verify_games(list_of_games)
         if list_of_discounts:
