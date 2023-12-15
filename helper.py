@@ -70,7 +70,7 @@ def record_messages(message):
         filename = os.sep.join(["skillet_data.csv"])
     elif os.name == "posix":
         filename = os.sep.join(
-            ["/", "home", "pi", "git_projects", "my_discord_bots", "skillet_data.csv"])
+            ["/", "home", "menajerulrobotilor", "git_projects", "my_discord_bots", "skillet_data.csv"])
     # filename = "skillet_data.csv"
 
     if not os.path.isfile(filename):
