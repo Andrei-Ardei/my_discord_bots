@@ -160,7 +160,7 @@ async def myLoop():
         filename = os.sep.join(["personal_library", "game_history.csv"])
     elif os.name == "posix":
         filename = os.sep.join(
-            ["/", "home", "pi", "git_projects", "my_discord_bots", "personal_library", "game_history.csv"])
+            ["/", "home", "menajerulrobotilor", "git_projects", "my_discord_bots", "personal_library", "game_history.csv"])
 
     # filename = os.sep.join(["personal_library","game_history.csv"])
     # Loop through all potential giveaways in a day
