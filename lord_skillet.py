@@ -4,7 +4,7 @@ from random import choice
 import requests
 import os
 import csv
-from personal_library import giveaway_requests, API_dictionary_request, steam_games_sale_tracker
+from personal_library import giveaway_requests, API_dictionary_request, steam_games_sale_tracker, API_Weather
 from datetime import time
 import pytz
 import auth
@@ -134,6 +134,25 @@ async def track(ctx, *, arg=None):
         else:
             # No results
             await ctx.message.author.send("Couldn't find any games like that.")
+
+
+@bot.command()
+async def weather(ctx, *, city: str):
+    """ weather function """
+    await ctx.message.delete()
+    result = API_Weather.unpack_response(city)
+    if isinstance(result, str):
+        await ctx.send(f'{result} - {city}')
+    else:
+        e = discord.Embed(
+            title=f"There is {round(float(result['cur_temp']))}°C in {city}")
+        e.add_field(name="Max Temperature", value=f"{result['max_temp']}°C")
+        e.add_field(name="Min Temperature", value=f"{result['min_temp']}°C")
+        e.add_field(name="Humidity", value=f"{result['humidity']}%")
+        e.add_field(name="Wind Speed", value=f"{result['wind_speed']}m/s")
+        e.add_field(name="Forecast", value=f"{result['cloudiness']}")
+        e.set_thumbnail(url=result['weather_icon'])
+        await ctx.send(embed=e)
 
 
 @bot.event
