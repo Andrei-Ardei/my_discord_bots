@@ -145,7 +145,7 @@ async def weather(ctx, *, city: str):
         await ctx.send(f'{result} - {city}')
     else:
         e = discord.Embed(
-            title=f"There is {round(float(result['cur_temp']))}°C in {city}")
+            title=f"There are {round(float(result['cur_temp']))}°C in {city}")
         e.add_field(name="Max Temperature", value=f"{result['max_temp']}°C")
         e.add_field(name="Min Temperature", value=f"{result['min_temp']}°C")
         e.add_field(name="Humidity", value=f"{result['humidity']}%")
@@ -214,7 +214,7 @@ async def myLoop():
                              giveaway['published_date'])
 
             # channel send message
-            channel_id = 925636804823121951
+            channel_id = 1186335299941445672
             channel = bot.get_channel(channel_id)
             await channel.send(embed=embed)
             helper.append_data_to_csv(
