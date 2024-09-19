@@ -140,7 +140,7 @@ def get_elements_by_author_id(filename, target_author_id):
         return []  # Return an empty list if the file doesn't exist
 
     # Filter elements by matching author_id
-    matching_elements = [entry['app_name'] for entry in data if str(entry.get(
+    matching_elements = [entry for entry in data if str(entry.get(
         'author_id')) == target_author_id]
 
     return matching_elements
@@ -179,5 +179,6 @@ def pop_the_current_subscription_if_a_discount_is_found(sub_id):
 if __name__ == "__main__":
     author_id = '243365137795383297'
     results = get_elements_by_author_id(notifications_json_file, author_id)
-    for result in results:
+    game_titles = [game['app_name'] for game in results]
+    for result in game_titles:
         print(result)

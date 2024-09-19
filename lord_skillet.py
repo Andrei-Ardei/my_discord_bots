@@ -51,8 +51,8 @@ async def mytrackedgames(ctx):
     discord_author_id = ctx.message.author.id
     list_of_games = helper.get_elements_by_author_id(
         helper.notifications_json_file, discord_author_id)
-
-    joined_games = ", ".join(list_of_games)
+    game_titles = [game['app_name'] for game in list_of_games]
+    joined_games = ", ".join(game_titles)
     await ctx.send(f"Hey {ctx.message.author.mention}, I am currently tracking these games for you: {joined_games}")
 
 
