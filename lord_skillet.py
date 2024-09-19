@@ -43,6 +43,20 @@ async def hello(ctx):
 
 
 @bot.command(pass_context=True)
+async def mytrackedgames(ctx):
+    """
+    Display all tracked games for yourself.
+    """
+    # Identify user
+    discord_author_id = ctx.message.author.id
+    list_of_games = helper.get_elements_by_author_id(
+        helper.notifications_json_file, discord_author_id)
+
+    joined_games = ", ".join(list_of_games)
+    await ctx.send(f"Hey {ctx.message.author.mention}, I am currently tracking these games for you: {joined_games}")
+
+
+@bot.command(pass_context=True)
 async def word(ctx, *, arg):
     '''Returns the word definition eg.,> $word horse <'''
     word_definition_list = API_dictionary_request.query_dictionary(arg)

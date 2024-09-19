@@ -1,4 +1,7 @@
 *.csv
 __pycache__
 *.pyc
+.venv
+personal_library/__pycache__
 notifications.json
+
