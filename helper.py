@@ -140,8 +140,8 @@ def get_elements_by_author_id(filename, target_author_id):
         return []  # Return an empty list if the file doesn't exist
 
     # Filter elements by matching author_id
-    matching_elements = [entry for entry in data if entry.get(
-        'author_id') == target_author_id]
+    matching_elements = [entry['app_name'] for entry in data if str(entry.get(
+        'author_id')) == target_author_id]
 
     return matching_elements
 
@@ -177,8 +177,7 @@ def pop_the_current_subscription_if_a_discount_is_found(sub_id):
 
 
 if __name__ == "__main__":
-    discord_users = get_unique_author_ids()
-    for user in discord_users:
-        list_of_games = get_elements_by_author_id(
-            notifications_json_file, user)
-        list_of_discounts = verify_games(list_of_games)
+    author_id = '243365137795383297'
+    results = get_elements_by_author_id(notifications_json_file, author_id)
+    for result in results:
+        print(result)
