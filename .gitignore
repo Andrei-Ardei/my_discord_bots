@@ -4,4 +4,6 @@ __pycache__
 .venv
 personal_library/__pycache__
 notifications.json
-
+.idea
+.vscode
+skillet_data.csv
