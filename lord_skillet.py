@@ -49,11 +49,17 @@ async def mytrackedgames(ctx):
     """
     # Identify user
     discord_author_id = ctx.message.author.id
+    print("Verifying ID:", discord_author_id)
+    # Get games list
     list_of_games = helper.get_elements_by_author_id(
         helper.notifications_json_file, discord_author_id)
-
-    joined_games = ", ".join(list_of_games)
-    await ctx.send(f"Hey {ctx.message.author.mention}, I am currently tracking these games for you: {joined_games}")
+    print("Found", list_of_games)
+    game_titles = [game['app_name'] for game in list_of_games]
+    # Append new line at the start of each game for presentation
+    joined_games = "{1}{0}".format('\n- '.join(game_titles), '\n - ')
+    print(joined_games)
+    # Send the message to Discord author
+    await ctx.send(f"Hey {ctx.message.author.mention}, I am currently tracking these games for you:{joined_games}")
 
 
 @bot.command(pass_context=True)
@@ -177,7 +183,7 @@ async def on_message(message):
     print(message.author)
     print(message.content)
     # record messages
-    helper.record_messages(message)
+    # helper.record_messages(message)
 
 # use - seconds=5, count=1 - for testing
 # use minutes=30 for live
