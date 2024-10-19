@@ -137,12 +137,12 @@ def get_elements_by_author_id(filename, target_author_id):
         with open(filename, 'r') as file:
             data = json.load(file)
     except FileNotFoundError:
+        print("Did not find the file:", filename)
         return []  # Return an empty list if the file doesn't exist
 
     # Filter elements by matching author_id
     matching_elements = [entry for entry in data if str(entry.get(
-        'author_id')) == target_author_id]
-
+        'author_id')) == str(target_author_id)]
     return matching_elements
 
 
